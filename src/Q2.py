@@ -491,6 +491,35 @@ def plot_problem2_result(result, S1, theta1, *, target_center=(0.0, 0.0), output
     return fig, ax
 
 
+
+def get_problem2_point_dynamic(S1, theta1, attempt=0):
+    """
+    改进版：S2 = S1 + d × 垂直方向，让交角接近 90°。
+    d 从 600m 起，正负交替，逐步调整。
+    """
+    import math
+    import numpy as np
+    S1 = np.asarray(S1, dtype=float)
+    
+    # (距离, 方向符号) 正负交替，从近到远
+    strategies = [
+        (600.0, +1), (600.0, -1),
+        (400.0, +1), (400.0, -1),
+        (800.0, +1), (800.0, -1),
+        (900.0, +1), (900.0, -1),
+        (1000.0, +1), (1000.0, -1),
+    ]
+    if attempt >= len(strategies):
+        return None, None
+    
+    d, sign = strategies[attempt]
+    perp = math.radians(theta1 + sign * 90.0)
+    S2 = S1 + d * np.array([math.cos(perp), math.sin(perp)])
+    
+    if np.linalg.norm(S2) > 1700:
+        return None, None
+    return S2, (float(sign * 90.0), float(d))
+
 if __name__ == "__main__":
     example = optimize_second_point(
         (0.0, 0.0), 30.0, candidate_spacing=200.0, source_sample_count=11
