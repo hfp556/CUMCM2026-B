@@ -7,7 +7,7 @@ import math
 import time
 import numpy as np
 
-from Q1 import localize_region, convex_diameter
+from Q1_FOR4 import localize_region, convex_diameter
 from Q2_FOR4 import get_problem4_point_dynamic_alternating
 from api_utils import post, base, measure
 
