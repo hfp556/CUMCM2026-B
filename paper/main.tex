@@ -1,0 +1,719 @@
+% ==============================================================================
+% 2026 年高教社杯全国大学生数学建模竞赛 B 题论文初稿（框架版）
+% ------------------------------------------------------------------------------
+% 编译方式：XeLaTeX（TeX Live / MiKTeX / Overleaf，需含 ctex 宏包）
+%   xelatex main.tex（编译两遍以更新交叉引用）
+%
+% 使用说明：
+%   - 全文所有【待补】/【待定】处均为尚未确定的方案、参数或实测数据，请勿
+%     在未填写前提交。
+%   - 按《全国大学生数学建模竞赛论文格式规范（2026年修订稿）》：
+%     · 电子版论文第一页必须为摘要页（本文即从摘要页开始，页码从 1 计）；
+%     · 承诺书与编号专用页不得放入电子版论文；
+%     · 正文不超过 30 页，不设目录；
+%     · 附录须包含支撑材料文件列表与全部可运行源程序代码；
+%     · 任何位置不得出现参赛队号、学校等身份信息。
+% ==============================================================================
+
+\documentclass[12pt,a4paper]{ctexart}
+
+% ---------- 页面与格式 ----------
+\usepackage[a4paper,margin=2.5cm]{geometry}   % 四边至少 2.5 cm
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}                        % 页码位于页脚中部
+\renewcommand{\headrulewidth}{0pt}
+
+% ---------- 常用宏包 ----------
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[hidelinks]{hyperref}
+
+% ---------- 定理环境 ----------
+\newtheorem{theorem}{定理}[section]
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{proposition}[theorem]{命题}
+\newtheorem{definition}[theorem]{定义}
+\newtheorem{remark}[theorem]{注}
+
+% ---------- 图表编号按章 ----------
+\numberwithin{figure}{section}
+\numberwithin{table}{section}
+\numberwithin{equation}{section}
+
+% ---------- 占位符宏 ----------
+% \todo{...}    需要补充的文字（红色框，定稿前删除）
+% \figtodo{...} 待插入的图（占位框，保持图表编号与交叉引用有效）
+\newcommand{\todo}[1]{\par\noindent{\color{red}\fbox{\parbox{0.92\textwidth}{\textbf{【待补】}#1}}}\par}
+\newcommand{\figtodo}[1]{\fbox{\parbox{0.6\textwidth}{\centering\textbf{【待插图】}\\[2pt]#1\par}}}
+
+% ---------- 算法环境中文 ----------
+\floatname{algorithm}{算法}
+\renewcommand{\algorithmicrequire}{\textbf{输入:}}
+\renewcommand{\algorithmicensure}{\textbf{输出:}}
+
+% ---------- 常用符号 ----------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\disk}[2]{B\!\left(#1,\,#2\right)}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\TBD}{\textcolor{red}{【待填】}}
+
+\begin{document}
+
+% ==============================================================================
+% 摘要（电子版论文第一页，页码从本页起为 1）
+% ==============================================================================
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\begin{center}
+{\LARGE\bfseries 无线电干扰源快速自动定位与清除的数学模型}\\[6pt]
+\todo{论文题目为工作标题，可再商定；摘要中的数值结论待实验数据补充。}
+\end{center}
+
+\noindent\textbf{摘要：}无线电干扰源的定位与清除是无线电频谱管理的重要任务。针对机器狗搭载测向机对目标区域内数量未知的干扰源进行自动定位与清除的问题，本文以“方位扇区约束—交会定位—覆盖扫描—追迹清除”为主线，建立了从单次观测建模到全局任务规划的完整数学模型。
+
+首先，将带误差的示向度建模为方位扇区约束，与接收半径上界、目标区域边界取交，得到凸的交会定位区域；提出半平面裁剪算法计算该区域、旋转卡壳算法计算其直径，并证明以区域直径为直径的圆不一定覆盖整个区域，给出锐角三角形反例与线性时间判定算法。其次，以最坏情况下二次定位区域直径最小为目标建立第二检测点选择模型，由示向线交点的一阶误差传播分析导出定位误差与交会角正弦成反比的灵敏度关系，据此给出可能检测区域与稳健候选区域。进而，提出“全覆盖发现扫描＋集中定位清除”的两阶段策略：证明半径为 $945$ 米的八点正八边形环扫描模式使目标区域内任意点到最近扫描点的距离不超过 $995.0$ 米、小于最小接收半径 $1000$ 米，从而保证干扰源被无遗漏发现；再按定位区域直径分级采用质心直接清除、补测迭代与沿示向线追迹夹逼，配合 Held-Karp 精确 TSP 路径调度及跳频、顺路清除等时间压缩措施，并给出不依赖目标真实总数的任务完成判定准则。最后，针对定向干扰源引入的无信号歧义，给出网格“包围性”扫描的完备发现构造与追迹信号保持分析。
+
+模拟器演练测试与三次正式测试中，……\todo{补充定量结论：清除比例、平均定位清除时间、程序运行时间等。}
+
+\noindent\textbf{关键词：}交会定位；方位扇区；凸多边形直径；覆盖扫描；追迹定位；任务调度
+
+\newpage
+
+% ==============================================================================
+% 一、问题分析
+% ==============================================================================
+\section{问题分析}
+
+\subsection{四个问题的递进关系}
+
+本题要求机器狗在半径 $1800$ 米的圆形目标区域内，对总数未知（$10\sim16$ 个）、频道与接收半径均未知的无线电干扰源完成发现、定位与清除，并尽可能缩短任务时间；可用的观测手段只有带 $[-1^{\circ},1^{\circ}]$ 误差的示向度。四个问题构成一条递进主线：问题一解决“如何表达与度量定位不确定性”，给出交会定位区域的几何表示与直径算法，是后续所有定位决策的基础；问题二解决“如何主动选择下一次观测”，在问题一的区域模型上建立选点优化；问题三解决“未知多目标环境下的完整搜索—定位—清除闭环”，其中频道发现、空间搜索、定位、路径调度与任务完成判定缺一不可；问题四在问题三基础上引入定向干扰源，核心变化是“无信号”观测的解释方式与发现阶段的完备性保证。
+
+\begin{figure}[H]
+\centering
+\figtodo{技术路线图：B1 定位区域表示 $\rightarrow$ B2 主动选点 $\rightarrow$ B3 两阶段搜索清除 $\rightarrow$ B4 定向源扩展}
+\caption{问题分析与建模总体技术路线}
+\label{fig:roadmap}
+\end{figure}
+
+\subsection{观测信息的结构}
+
+本题的观测具有三个关键性质，直接影响建模方式：
+
+（1）\textbf{示向度是方位而非位置}。一次检测只返回角度，且误差固定于 $[-1^{\circ},1^{\circ}]$；同一地点的电磁环境干扰在一段时间内固定，原地重复检测不能消除误差。因此每个有效观测应解释为一个\textbf{方位扇区约束}，而非一条精确射线；不同地点的观测扇区交会才带来新的几何信息。
+
+（2）\textbf{“无信号”不等于频道为空}。检测点接收不到某频道信号可能因为：该频道没有未清除干扰源、距离超过该源的有效接收半径（$1000\sim1500$ 米，未知）、或（问题四中）检测点位于定向源覆盖角度之外。因此“无信号”是弱证据，只能排除局部空间，不能直接判定频道为空。
+
+（3）\textbf{“near”与清除规则独立于无线电检测}。距目标不超过 $5$ 米检测返回 near，直接给出“目标已在极近距离”的强位置信息；清除依赖光学定位与激光，距目标不超过 $20$ 米即可成功，且与定向源的朝向无关。
+
+\subsection{时间成本结构}
+
+任务虚拟时间由四部分构成：
+\begin{equation}
+T = \frac{L}{5} + 5\,N_{\mathrm{measure}} + N_{\mathrm{switch}} + 3\,N_{\mathrm{clear}}^{\mathrm{fail}} + 5\,N_{\mathrm{clear}}^{\mathrm{ok}},
+\label{eq:cost}
+\end{equation}
+其中 $L$ 为总移动距离（米），$N_{\mathrm{measure}}$ 为检测次数，$N_{\mathrm{switch}}$ 为频道切换次数，$N_{\mathrm{clear}}^{\mathrm{fail}}$、$N_{\mathrm{clear}}^{\mathrm{ok}}$ 分别为未发现与成功的清除次数。可见\textbf{移动成本占主导}（$1$ 米约 $0.2$ 秒，一次 $1000$ 米移动约 $200$ 秒，而一次检测仅 $5$ 秒），因此策略设计的核心是：用尽量少的移动距离获取足够的几何信息，并合并多目标的移动路径。此外，程序运行时间受现实时间限制（/enter 后最长 $20$ 分钟，测试窗口 $25$ 分钟），虚拟时间上限为 $100$ 小时，正常策略不受虚拟上限约束。
+
+% ==============================================================================
+% 三、模型假设
+% ==============================================================================
+\section{模型假设}
+
+\begin{enumerate}[label=\textbf{(\arabic*)}]
+\item 测向机与所有干扰源位于同一平面，忽略高度差异（题面给定）；
+\item 示向度误差在 $[-1^{\circ},1^{\circ}]$ 范围内，同一地点同一时段误差固定，不同地点误差呈现统计规律（题面给定）；
+\item 干扰源有效接收半径独立且未知，位于 $[1000,1500]$ 米内；覆盖角度内信号均匀辐射，场强仅随距离衰减（题面给定）；
+\item 每个频道至多一个干扰源，不同干扰源信号互不影响，频道与类型不随时间变化（题面给定）；
+\item 机器狗沿直线匀速移动，速度 $5$ 米/秒；检测、频道切换、光学定位与清除耗时分别固定为 $5$、$1$、$3$、$2$ 秒（题面给定）；
+\item 检测与清除动作在满足距离/覆盖条件时必然成功（题面给定）；机器狗可以移动到目标区域之外进行检测（题面给定）；
+\item 问题三中所有干扰源为全向；问题四中部分为定向、其方向未知（题面给定）；
+\item 数值计算中圆盘边界以正多边形近似（问题一、三为 $360$ 边形，问题二为 $180$ 边形），近似误差远小于观测误差量级，可忽略（计算假设）。
+\end{enumerate}
+
+% ==============================================================================
+% 四、符号说明
+% ==============================================================================
+\section{符号说明}
+
+\begin{table}[H]
+\centering
+\caption{主要符号说明}
+\label{tab:symbols}
+\begin{tabular}{clcl}
+\toprule
+符号 & 含义 & 符号 & 含义 \\
+\midrule
+$O$ & 目标区域圆心（坐标原点） & $R_0$ & 目标区域半径，$1800$ 米 \\
+$R_{\min}$ & 接收半径下界，$1000$ 米 & $R_{\max}$ & 接收半径上界，$1500$ 米 \\
+$R_i$ & 干扰源 $i$ 的有效接收半径 & $S_k$ & 第 $k$ 次检测点位置 \\
+$\hat{\theta}_k$ & 第 $k$ 次示向度（含误差的测量值） & $\theta^*$ & 干扰源真实方位角 \\
+$\varepsilon$ & 示向度最大误差，$1^{\circ}$ & $W(S,\hat{\theta},\varepsilon)$ & 检测点 $S$ 处的示向扇区 \\
+$\Omega$ & 交会定位区域 & $\Omega_1$ & 第一次观测后的可能区域 \\
+$D(\Omega)$ & 区域直径 & $\varphi$ & 两示向线交会角 \\
+$r_i$ & 检测点到干扰源的距离 & $G$ & 干扰源位置 \\
+$N$ & 干扰源总数（$10\sim16$） & $C$ & 频道集合，$\{1,\dots,20\}$ \\
+$v$ & 移动速度，$5$ 米/秒 & $T$ & 任务总虚拟时间 \\
+$\disk{O}{R}$ & 以 $O$ 为圆心半径 $R$ 的圆盘 & $\oplus$ & Minkowski 和 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==============================================================================
+% 五、问题一：交会定位区域、直径与覆盖性
+% ==============================================================================
+\section{问题一的建模与求解}
+
+\subsection{单次观测的可行域模型}
+
+设干扰源位于 $G$，检测点位于 $S$，测得的示向度为 $\hat{\theta}$（$x$ 轴正向逆时针旋转至向量 $\overrightarrow{SG}$ 的角度）。由于示向误差不超过 $\varepsilon=1^{\circ}$，真实方位角满足
+\begin{equation}
+\theta^{*}\in[\hat{\theta}-\varepsilon,\ \hat{\theta}+\varepsilon],
+\end{equation}
+即 $G$ 必位于以 $S$ 为顶点、关于方向 $\hat{\theta}$ 对称的张角为 $2\varepsilon$ 的\textbf{示向扇区}
+\begin{equation}
+W(S,\hat{\theta},\varepsilon)=\left\{P:\ \angle\left(P-S\right)\in[\hat{\theta}-\varepsilon,\ \hat{\theta}+\varepsilon]\ (\mathrm{mod}\ 360^{\circ})\right\}
+\end{equation}
+内。扇区是两条射线围成的无限凸域，其内部约束可表示为两个线性半平面约束的交。
+
+另一方面，检测点能收到信号说明检测点位于干扰源有效接收半径内，而 $R_i\le R_{\max}=1500$，故
+\begin{equation}
+\norm{G-S}\le R_{\max}.
+\end{equation}
+注意这里不引入 $R_{\min}$ 作为距离下界：$1000$ 米是接收半径的下界，而干扰源与检测点的距离可以任意小。又干扰源必在目标区域内，故 $G\in\disk{O}{R_0}$。于是单次观测后干扰源的可行域为
+\begin{equation}
+\Omega(S,\hat{\theta})=\disk{O}{R_0}\cap\disk{S}{R_{\max}}\cap W(S,\hat{\theta},\varepsilon),
+\label{eq:single-region}
+\end{equation}
+它是三个凸集（两个圆盘与一个扇区）的交，因而是凸的。
+
+\begin{remark}
+若检测返回示向度（而非 near），则干扰源与检测点距离严格大于 $5$ 米，理论上可在 \eqref{eq:single-region} 中再扣除小圆盘 $\disk{S}{5}$；该洞的直径不超过 $10$ 米量级，对区域整体几何形态影响甚微，为保持区域凸性以便后续算法，本文予以忽略。
+\end{remark}
+
+\subsection{交会定位区域模型与求解算法}
+
+对同一干扰源在 $n$ 个检测点 $S_1,\dots,S_n$ 测得示向度 $\hat{\theta}_1,\dots,\hat{\theta}_n$，交会定位法将所有单次观测约束取交，得到定位区域
+\begin{equation}
+\Omega=\bigcap_{i=1}^{n}\left(\disk{O}{R_0}\cap\disk{S_i}{R_{\max}}\cap W(S_i,\hat{\theta}_i,\varepsilon)\right),
+\label{eq:localize}
+\end{equation}
+即所有观测共同允许的干扰源位置集合。由于凸集的交仍为凸，$\Omega$ 是凸区域；其边界由圆盘弧段与示向扇区射线段组成。数值上，我们用 $360$ 边形近似圆盘边界（误差可忽略），用\textbf{逐半平面裁剪}（Sutherland--Hodgman 型）求多边形交集，将 $\Omega$ 表示为一个凸多边形。
+
+\begin{algorithm}[H]
+\caption{交会定位区域的求解（凸多边形裁剪）}
+\label{alg:localize}
+\begin{algorithmic}[1]
+\Require 检测点集 $\{S_i\}$，示向度 $\{\hat{\theta}_i\}$，参数 $R_0,R_{\max},\varepsilon$
+\Ensure 定位区域凸多边形 $\Omega$
+\State $\Omega\leftarrow\disk{O}{R_0}$ 的 $360$ 边形近似
+\For{$i=1,\dots,n$}
+    \State 用示向扇区 $W(S_i,\hat{\theta}_i,\varepsilon)$ 的两条边界射线半平面裁剪 $\Omega$
+    \State 用圆盘 $\disk{S_i}{R_{\max}}$ 的近似多边形裁剪 $\Omega$
+    \If{$\Omega=\varnothing$} \State \textbf{break}（观测相互矛盾，见注~\ref{rem:contradict}） \EndIf
+\EndFor
+\State \Return $\Omega$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{remark}
+\label{rem:contradict}
+多个观测可能因误差取值不同而暂时无公共交集；处理策略是优先信任较新观测，从最旧观测开始逐个丢弃直至交集非空（用于问题三的在线定位）。
+\end{remark}
+
+单次半平面裁剪为 $O(m)$（$m$ 为当前多边形顶点数），每加入一个观测顶点数至多增加 $2+360$ 个；本题观测次数 $n$ 很小（问题三中每个频道一般不超过十余个观测点），总体计算量完全满足实时需求。
+
+\subsection{定位区域直径的旋转卡壳算法}
+
+定位区域直径定义为
+\begin{equation}
+D(\Omega)=\max_{P,Q\in\Omega}\norm{P-Q}.
+\label{eq:diameter}
+\end{equation}
+由 $\Omega$ 凸且为多边形，$D(\Omega)$ 必在某对顶点处取得，故可用\textbf{旋转卡壳}算法在 $O(m)$ 时间内求出（$m$ 为顶点数）：以一对平行支撑线与多边形相切并旋转一周，维护对踵点对之间距离的最大值。相比枚举顶点对 $O(m^2)$，旋转卡壳在顶点数较多（圆盘近似带来大量顶点）时显著更快。
+
+\subsection{以直径为直径的圆能否覆盖定位区域}
+
+记直径端点对为 $A,B$，即 $\norm{A-B}=D(\Omega)$，考察以 $AB$ 为直径的圆 $\mathcal{C}$（圆心 $O_c=(A+B)/2$，半径 $D/2$）。由泰勒斯定理，$\mathcal{C}$ 是满足 $\angle APB\ge 90^{\circ}$ 的点 $P$ 的集合，因此
+
+\begin{theorem}[直径圆覆盖的充要条件]
+\label{thm:coverage}
+设 $A,B$ 为区域 $\Omega$ 的一对直径端点。以 $AB$ 为直径的圆覆盖 $\Omega$ 的充要条件是
+\begin{equation}
+\forall P\in\Omega:\quad \angle APB\ge 90^{\circ}\quad(\text{或 }P\text{ 在 }AB\text{ 上}).
+\end{equation}
+\end{theorem}
+
+\textbf{回答：不一定。} 一个简单的反例是锐角三角形：取顶点 $A=(-2,0)$，$B=(2,0)$，$C=(0,3)$，则 $\norm{AB}=4$，$\norm{AC}=\norm{BC}=\sqrt{13}\approx3.61$，故直径 $D=4$，以 $AB$ 为直径的圆为圆心 $(0,0)$、半径 $2$ 的圆；而 $\norm{OC}=3>2$，顶点 $C$ 在圆外。其几何根源是锐角三角形中最大角小于 $90^{\circ}$，由泰勒斯定理，相对最长边的顶点必在以最长边为直径的圆外。\todo{建议配一幅反例示意图（可用 Q1.py 生成）。}
+
+\begin{remark}
+并非任何区域都出现此现象：若 $\Omega$ 的直径端点对恰好使所有点对之的张角不小于 $90^{\circ}$（例如圆盘本身），则直径圆恰为最小覆盖圆之一。一般地，由 Jung 定理\cite{jung1901}，平面上直径 $D$ 的任意区域必可被半径为 $D/\sqrt{3}$ 的圆覆盖，而半径 $D/2$ 的直径圆不能保证。需要强调，本文后续策略并不依赖“直径圆覆盖”：问题三中质心清除的保证由直径定义本身给出（真实干扰源与区域质心均位于凸区域 $\Omega$ 内，二者距离不超过 $D(\Omega)$），因此本节的否定结论不影响任何后续定位与清除策略的正确性；若需以单个圆概括区域，正确工具是最小覆盖圆（半径介于 $D/2$ 与 $D/\sqrt{3}$ 之间）。
+\end{remark}
+
+对于凸多边形区域，最远点必在顶点处取得，故覆盖性判定只需检验各顶点到 $O_c$ 的距离是否不超过 $D/2$，复杂度 $O(m)$，与直径计算同阶。
+
+\subsection{数值算例}
+
+\figtodo{由 Q1.py 生成的算例图：目标区域、检测点、示向扇区、交会定位区域 $\Omega$、直径线段与直径圆}
+
+\begin{table}[H]
+\centering
+\caption{问题一数值算例（参数与结果待由 Q1.py 运行生成）}
+\label{tab:q1-example}
+\begin{tabular}{cccccc}
+\toprule
+检测点 & 示向度 & 区域顶点数 & 区域直径 $D$ (m) & 直径圆半径 $D/2$ (m) & 直径圆是否覆盖 \\
+\midrule
+\TBD & \TBD & \TBD & \TBD & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==============================================================================
+% 六、问题二：第二检测点的选择策略
+% ==============================================================================
+\section{问题二的建模与求解}
+
+\subsection{问题建模}
+
+第一次检测后，由式~\eqref{eq:single-region} 得可能区域 $\Omega_1$。选择第二检测点 $S_2$ 后，若在该点成功测得示向度 $\hat{\theta}_2$，则新定位区域为 $\Omega_2=\Omega_1\cap\disk{S_2}{R_{\max}}\cap W(S_2,\hat{\theta}_2,\varepsilon)$。由于 $\hat{\theta}_2$ 取决于干扰源真实位置与误差，我们以\textbf{最坏情况下的定位区域直径}评价 $S_2$ 的定位效果：
+\begin{equation}
+\min_{S_2\in\mathcal{S}}\ \max_{G\in\Omega_1}\ D\!\left(\Omega_1\cap\disk{S_2}{R_{\max}}\cap W\!\left(S_2,\theta_2(G),\varepsilon\right)\right),
+\label{eq:q2-objective}
+\end{equation}
+其中 $\theta_2(G)$ 为 $G$ 关于 $S_2$ 的真实方位角，$\mathcal{S}$ 为第二检测点候选集。最坏直径相同（或相近）时，再依次偏好更短的移动距离与更大的典型交会角。
+
+\subsection{示向线交会的灵敏度分析}
+
+式~\eqref{eq:q2-objective} 的合理性可由一阶误差传播分析说明。设两条示向线交于 $P$，交会角为 $\varphi\in(0,90^{\circ}]$，检测点到 $P$ 的距离分别为 $r_1,r_2$。
+
+\begin{proposition}[交会灵敏度]
+\label{prop:sensitivity}
+将 $\theta_1$ 增加 $d\theta_1$，交点沿第二示向线滑动，且
+\begin{equation}
+\norm{\frac{dP}{d\theta_1}}=\frac{r_1}{\sin\varphi},\qquad
+\norm{\frac{dP}{d\theta_2}}=\frac{r_2}{\sin\varphi}.
+\end{equation}
+因此示向误差 $\varepsilon$ 引起交点的一阶偏移不超过
+\begin{equation}
+\norm{\delta P}\lesssim\frac{r_1+r_2}{\sin\varphi}\,\varepsilon .
+\label{eq:sensitivity}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+设 $P=S_1+r_1u(\theta_1)$，其中 $u(\theta)=(\cos\theta,\sin\theta)$，且 $P$ 恒在过 $S_2$、方向 $u(\theta_2)$ 的直线上，即 $(P-S_2)\cdot n(\theta_2)=0$，$n=(-\sin\theta,\cos\theta)$。对 $\theta_1$ 求导并利用该约束可解得 $\dfrac{dP}{d\theta_1}=\dfrac{r_1}{\sin\varphi}\,u(\theta_2)$，故 $\norm{dP/d\theta_1}=r_1/\sin\varphi$；对 $\theta_2$ 对称地有 $\norm{dP/d\theta_2}=r_2/\sin\varphi$。由三角不等式即得式~\eqref{eq:sensitivity}。
+\end{proof}
+
+式~\eqref{eq:sensitivity} 表明：（i）交会角 $\varphi$ 越接近 $90^{\circ}$，$\sin\varphi$ 越大，误差放大越小；$\varphi\to 0$ 时定位病态（两观测共线，信息重复）；（ii）检测点越接近干扰源（$r_i$ 越小），误差放大越小。这为第二检测点提供了明确的几何准则：\textbf{使交会角接近直角、且距可能区域不太远}。
+
+\subsection{候选区域的构造}
+
+并非所有位置都适合作为第二检测点。对 $S_2$ 定义两类区域：
+
+\textbf{可能检测区域}：存在某个可能干扰源位置使 $S_2$ 可收到信号（用最大接收半径保证），即
+\begin{equation}
+\mathcal{S}_{\mathrm{pos}}=\Omega_1\oplus\disk{O}{R_{\max}}=\left\{P:\ \mathrm{dist}(P,\Omega_1)\le R_{\max}\right\};
+\end{equation}
+
+\textbf{稳健候选区域}：对 $\Omega_1$ 中\textbf{任意}可能干扰源位置，即使其接收半径取最小值 $R_{\min}=1000$ 也能被 $S_2$ 检测到，
+\begin{equation}
+\mathcal{S}_{\mathrm{rob}}=\bigcap_{G\in\Omega_1}\disk{G}{R_{\min}}=\left\{P:\ \max_{G\in\Omega_1}\norm{P-G}\le R_{\min}\right\}.
+\end{equation}
+由于 $\Omega_1$ 为凸多边形，$\mathrm{dist}(P,\Omega_1)$ 可通过点到各边距离求最小，$\max_{G\in\Omega_1}\norm{P-G}$ 只需检验多边形顶点，二者均可快速判定。$\mathcal{S}_{\mathrm{rob}}$ 保证第二次观测\textbf{必能}获得有效信息，是优化式~\eqref{eq:q2-objective} 的自然搜索域；$\mathcal{S}_{\mathrm{pos}}$ 则给出完整的候选区域（图~\ref{fig:q2-region}）。
+
+\begin{figure}[H]
+\centering
+\figtodo{Q2.py 生成的候选区域图：$\Omega_1$、可能检测区域与稳健候选区域的离散点云、推荐点 $S_2^{*}$、示向扇区边界}
+\caption{问题二：第二检测点候选区域与推荐点}
+\label{fig:q2-region}
+\end{figure}
+
+\subsection{离散化求解算法}
+
+式~\eqref{eq:q2-objective} 是连续 min--max 问题，我们采用两层离散化求解：对 $\mathcal{S}_{\mathrm{rob}}$ 在包围盒内以间距 $150$ 米采样得候选点集（仅在稳健候选点中寻优，保证第二次检测在接收半径未知时仍必能获得有效信息）；对 $\Omega_1$ 在质心与边界上确定性采样 $K=13$ 个代表源位置（质心 $1$ 个＋边界 $12$ 个，边界点覆盖最坏情形）。对每个候选点 $S_2$ 与每个代表源 $G$，计算两次交会后的区域直径并取最坏值，选其最小者。复杂度为 $O(\text{候选点数}\times K\times \text{单次交会成本})$，秒级可完成。
+
+\begin{remark}
+若 $S_2$ 与某代表源距离不超过 $5$ 米，检测将返回 near 而非示向度——near 是比测向更强的信息，不应把这种“退化”当最优而虚假奖励，故评估时剔除这类源样本；实际执行中若遇 near 则直接进入近距离处理流程。
+\end{remark}
+
+\subsection{数值算例}
+
+\figtodo{推荐点随第一次示向度变化的对比图或灵敏度验证图（可选）}
+
+\begin{table}[H]
+\centering
+\caption{问题二算例结果（待由 Q2.py 运行生成）}
+\label{tab:q2-example}
+\begin{tabular}{cccccc}
+\toprule
+$S_1$ & $\hat{\theta}_1$ & 推荐 $S_2^{*}$ & 最坏直径 (m) & 典型交会角 & 移动距离 (m) \\
+\midrule
+\TBD & \TBD & \TBD & \TBD & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==============================================================================
+% 七、问题三：全向干扰源的全局搜索定位清除策略
+% ==============================================================================
+\section{问题三的建模与求解}
+
+本节按最终确定的正式运行版本 \texttt{Q3\_fast2.py}（八点正八边形环覆盖扫描＋交会分级清除＋Held-Karp 精确 TSP，运行于 \texttt{geo\_common.py} 与 \texttt{api\_utils.py} 之上）撰写；其余版本（\texttt{Q3\_fast.py}、\texttt{Q3.py}、\texttt{Q3\_7000s.py}、\texttt{Q3\_dzz.py}）为备选存档。
+
+\subsection{总体框架}
+
+问题三要求在\textbf{未知目标数量}（$10\sim16$ 个）、未知频道、未知接收半径的条件下确保全清除并最小化时间。我们将任务分解为两个阶段：
+
+\textbf{阶段一（发现）}：沿一条可证明“覆盖完备”的八点环扫描路径遍历扫描点，在每个点按跳频规则检测全部 $20$ 个频道，收集所有方位观测（遇 near 就地清除，途中顺路清除已定位频道），保证\textbf{不漏掉任何干扰源}；
+
+\textbf{阶段二（处理）}：对每个被发现的频道，利用其全部方位观测交会定位，按区域直径分级采取“质心直接清除 / 补测迭代 / 追迹夹逼”策略逐个清除，并用 Held-Karp 精确 TSP 规划处理顺序、每清除一个目标后从当前位置重新规划，以合并移动路径。
+
+由于阶段一具有完备性保证，阶段二处理完所有已发现频道即完成任务，无需知道干扰源真实总数。
+
+\subsection{发现阶段：八点环扫描的完备性}
+
+扫描点布局取半径为 $r$ 的正八边形环上的 $8$ 个顶点：
+\begin{equation}
+\mathcal{P}=\left\{r\left(\cos\frac{k\pi}{4},\ \sin\frac{k\pi}{4}\right):\ k=0,\dots,7\right\}.
+\label{eq:scan-points}
+\end{equation}
+与“圆心＋六边形环”的布局不同，本布局不设圆心扫描点：圆心到最近环点距离恰为 $r$，只要 $r<R_{\min}$ 中心区域即被覆盖。环点数取 $8$ 使相邻环点夹角降至 $45^{\circ}$，满足覆盖条件的环半径因而可缩至 $1000$ 米以内，环上路径由六边形方案的 $7200$ 米缩至约 $5786$ 米，且省去圆心点的 $20$ 次检测与往返路程。
+
+\begin{lemma}[覆盖距离]
+\label{lem:coverage}
+对布局~\eqref{eq:scan-points}，目标区域内任意点到最近扫描点的距离不超过
+\begin{equation}
+d_{\max}=\max_{\rho\in[0,R_0]}\sqrt{\rho^{2}+r^{2}-2\rho r\cos\frac{\pi}{8}}
+=\max\!\left\{r,\ \sqrt{R_0^{2}+r^{2}-2R_0r\cos\frac{\pi}{8}}\,\right\},
+\label{eq:oct-coverage}
+\end{equation}
+且该上界可达：第一项在圆心处取得（到最近环点距离为 $r$），第二项在目标圆边界上相邻两环顶点角平分线方向处取得。
+\end{lemma}
+
+\begin{proof}
+任取 $P\in\disk{O}{R_0}$，记 $\rho=\norm{P}$。$P$ 到最近环顶点的方向夹角 $\delta\le\pi/8$，距离平方为 $\rho^2+r^2-2\rho r\cos\delta\le\rho^2+r^2-2\rho r\cos(\pi/8)\eqqcolon g(\rho)$（$\cos$ 在 $[0,\pi]$ 上递减）。$g$ 是凸二次函数，在 $[0,\,r\cos(\pi/8)]$ 上递减、在 $[r\cos(\pi/8),+\infty)$ 上递增，故 $g$ 在 $[0,R_0]$ 上的最大值在端点取得：$\max_{\rho\in[0,R_0]}g(\rho)=\max\{r^{2},\,g(R_0)\}$，分别对应 $\rho=0$（圆心）与 $\rho=R_0$（边界上角平分线方向，此时 $\delta=\pi/8$ 取等）。开方即得式~\eqref{eq:oct-coverage}。
+\end{proof}
+
+取 $r=945$ 米时，
+\begin{equation}
+\sqrt{1800^{2}+945^{2}-2\times1800\times945\times\cos22.5^{\circ}}\approx995.0\ \text{米}<R_{\min}=1000\ \text{米},
+\end{equation}
+且圆心处覆盖距离 $r=945<1000$ 米，故 $d_{\max}\approx995.0$ 米，裕量约 $5$ 米。由引理，使 $d_{\max}<1000$ 米的环半径条件为 $r<1000$ 且 $g(R_0)<1000^{2}$，即 $r\in(938,1000)$ 米；取 $r=945$ 米靠近区间左端，在保留约 $5$ 米覆盖裕量的同时使环路径较短。
+
+\begin{lemma}[发现完备性]
+\label{lem:discovery}
+在问题三（全向源）下，机器狗按布局~\eqref{eq:scan-points}（$r=945$ 米）遍历扫描点、并在每个点按跳频规则检测全部 $20$ 个频道后，所有存在干扰源的频道都已被发现（即至少获得一次 direction 或 near 观测）。
+\end{lemma}
+
+\begin{proof}
+对任一干扰源 $G\in\disk{O}{R_0}$，由引理~\ref{lem:coverage} 存在扫描点 $P$ 使 $\norm{G-P}\le995.0<1000\le R_i$，即 $P$ 在 $G$ 的有效接收半径内；全向源在该点必可被检测，返回 direction（或距离不超过 $5$ 米时返回 near）。又跳频规则只跳过已获得观测的频道（直径条件仅对已检测频道计算），对尚无观测的频道每个扫描点都必检测，故该频道在被首次观测到之前不会被跳过，必在某个扫描点（如 $P$）被观测到。
+\end{proof}
+
+由此，阶段一结束时“已观测频道集合”即“存在干扰源的频道集合”，\textbf{任务完成判定不再依赖未知的目标总数}。若某次检测返回 near（距离不超过 $5$ 米$\le20$ 米），原地清除必成功，可立即清除。
+
+\begin{figure}[H]
+\centering
+\figtodo{八点环覆盖扫描模式示意图：目标圆、正八边形环、各扫描点覆盖圆盘、最坏点与 $995.0$ 米覆盖半径的图示}
+\caption{八点环覆盖扫描模式与覆盖完备性示意}
+\label{fig:scan8}
+\end{figure}
+
+\subsection{扫描阶段的执行与耗时预算}
+
+扫描路径为：起点（原点）$\to$ 首个环顶点（$945$ 米）$\to$ 沿环顺序遍历其余 $7$ 个顶点；相邻环顶点弦长为 $2r\sin(\pi/8)\approx723.3$ 米，环上共 $7\times723.3\approx5063$ 米，总路程约 $6008$ 米。为缩短阶段二与源群的距离，首个环顶点取得示向度后按下式估计源群方位
+\begin{equation}
+\hat{\theta}_{c}=\mathrm{atan2}\!\left(\sum_{j}\sin\hat{\theta}_{j},\ \sum_{j}\cos\hat{\theta}_{j}\right),
+\end{equation}
+（求和遍历首个环顶点获得的所有示向度），并在首环顶点的两个相邻环顶点方向（$\pm45^{\circ}$）中选取与 $\hat{\theta}_{c}$ 较近者作为扫描终点一侧，使扫描结束位置靠近源群。
+
+每个扫描点按频道 $1\to20$ 顺序检测，并按下列\textbf{跳频规则}跳过不必要的检测，省去无效的检测与频道切换时间：
+\begin{enumerate}[label=\textbf{(\arabic*)}]
+\item 已清除频道跳过；
+\item 尚未获得任何观测的频道必须检测（否则破坏发现完备性）；
+\item 交会区域直径 $D\le60$ 米的频道已定位充分，跳过；
+\item 直径 $60<D\le90$ 米且区域所有顶点到当前扫描点的距离均超过 $1500$ 米（接收半径上界）的频道，在该点收到信号的可能性极小，跳过（工程上以顶点距离近似点到凸区域的距离）。
+\end{enumerate}
+
+此外，在相邻扫描点之间执行\textbf{顺路清除}：若某频道交会区域直径 $D\le90$ 米，其质心即为清除点；当“当前点$\to$质心$\to$下一扫描点”的绕路不超过 $250$ 米时，立即绕行处理该频道（质心直接清除或补测迭代），避免阶段二为它专门跑一趟；同一频道的顺路处理至多尝试一次，防止反复兜圈。
+
+设计耗时预算（最坏情形：无跳频、无顺路节省）为
+\begin{equation}
+T_{\mathrm{scan}}\approx\frac{6008}{5}+160\times5+159\times1\approx2161\ \text{秒}\approx36\ \text{分钟},
+\label{eq:scan-budget}
+\end{equation}
+其中三项依次为移动、$8\times20=160$ 次检测、$160-1=159$ 次频道切换；该预算不含阶段二的定位清除动作与移动。跳频与顺路清除使实测值通常低于该上界，以模拟器实测为准（表~\ref{tab:q3-stats}）。
+
+\subsection{单目标的定位与清除策略}
+
+对某个已发现频道，设其全部观测为 $\{(S_j,\hat{\theta}_j)\}$，交会定位区域为 $\Omega$，直径为 $D$。若观测相互矛盾使交集为空，则从最旧观测开始逐个丢弃直至非空（注~\ref{rem:contradict}）。按下述分级策略处理：
+
+\begin{enumerate}[label=\textbf{(\arabic*)}]
+\item \textbf{质心直接清除（$D\le90$ 米）}：先移动到交会区域质心 $C$ 尝试清除。若 $D\le20$ 米，质心到真实干扰源的距离不超过 $D\le20$ 米（质心在凸区域内，区域任意两点距离不超过 $D$），清除必成功；$D>20$ 米时尝试未必成功，但失败代价仅为一次清除动作与一次原地补测。清除失败则在 $C$ 处补测：返回 near 则原地清除；返回 direction 则观测并入交会、区域收紧后转入（2）。
+\item \textbf{质心补测迭代}：在交会区域质心反复检测（至多 $8$ 轮）：每轮先更新区域，直径 $D\le30$ 米时先尝试清除；否则检测，near 则原地清除，direction 则并入观测继续收紧；若返回 no\_signal（在已获得方向观测的前提下属异常），沿最新示向度前进 $100$ 米补测一次，near 则清除，仍无信号则放弃该流程。\todo{阈值 $90/30$ 为工程参数，待实测调整。}
+\item \textbf{沿示向线追迹（homing，$D>90$ 米）}：区域沿某观测方向延伸较长，改为沿示向线逼近。选离区域质心最近的观测点 $P^{*}$ 及其示向度 $\hat{\theta}$，计算区域沿该射线的深度区间 $[\ell,h]$，从深度 $\ell+0.35(h-\ell)$ 处入射线（略偏浅端：越过源的代价高于多走一段）。先原地检测确认方向：
+      \begin{itemize}
+      \item 返回 near，原地清除；
+      \item 返回 direction 且与射线方向夹角大于 $90^{\circ}$，说明源在入射线后方，直接以深度上界进入夹逼收尾；
+      \item 返回 direction 且方向一致，沿新示向度继续前进（每步重新校正方向，侧向偏差不累积）；
+      \item 返回 no\_signal，说明干扰源仍在接收半径之外（距离大于 $1000$ 米），继续前进不会越过。
+      \end{itemize}
+      随后以 $200$ 米步长沿示向度前进，每次检测：返回 direction 且新示向度与前进方向夹角大于 $90^{\circ}$，说明已越过干扰源，源位于最后一步区间内，转入夹逼收尾；方向一致则继续前进；返回 near 则原地清除。由于能测到示向度时源距不超过 $1500$ 米，最多 $8$ 步必越过；接近区域外沿（距原点超过 $2100$ 米）时改用 $100$ 米小步，防止离开目标区太远；$8$ 步仍未越过的异常情形回退（2）兜底。
+\item \textbf{夹逼收尾}：设已越过干扰源且源位于当前点沿示向线前方不超过 $b$ 米内。反复取步长 $\min(b,\ \max(36,\ b/2))$ 前进并检测，越界则取本步区间、否则缩小区间，直至 $b\le36$ 米，此时从当前点沿示向线前进 $b/2\le18$ 米收尾清除（失败则原地补测：near 原地清除，direction 再前进 $b/4$ 米清除，仍失败回退（2）兜底）。
+\end{enumerate}
+
+\begin{lemma}[夹逼收尾的清除保证]
+\label{lem:bracket}
+若干扰源位于当前点沿示向线深度不超过 $b$ 米的区间内（真实方向与示向度偏差不超过 $1^{\circ}$），则在收尾点 $F=C+(b/2)\,u(\hat{\theta})$ 处有
+\begin{equation}
+\norm{G-F}\le\frac{b}{2}+2b\sin\frac{1^{\circ}}{2}\le\frac{36}{2}+2\times36\times\sin0.5^{\circ}\approx18.63<20\ \text{米},
+\end{equation}
+故 $b\le36$ 米时收尾点清除必成功。
+\end{lemma}
+
+\begin{proof}
+设 $G=C+t\,u(\theta^{*})$，$0\le t\le b$，$|\theta^{*}-\hat{\theta}|\le1^{\circ}$。则
+\begin{equation*}
+\norm{G-F}=\norm{t\,u(\theta^{*})-\frac{b}{2}u(\hat{\theta})}\le\left|t-\frac{b}{2}\right|+t\,\norm{u(\theta^{*})-u(\hat{\theta})}\le\frac{b}{2}+2b\sin\frac{1^{\circ}}{2},
+\end{equation*}
+代入 $b=36$ 米即得 $18.63<20$ 米。
+\end{proof}
+
+上述分级处理中，所有清除尝试均在交会区域的质心或示向线附近进行，移动代价可控；每一步都同时贡献新的几何信息（观测并入交会），形成“观测—定位—逼近”闭环。
+
+\begin{algorithm}[H]
+\caption{问题三总体流程}
+\label{alg:q3}
+\begin{algorithmic}[1]
+\Require 八点环扫描布局 $\mathcal{P}$（式~\eqref{eq:scan-points}，$r=945$ 米），频道集 $C=\{1,\dots,20\}$
+\State 调用 /enter；维护虚拟时间、机器人位置、各频道观测表与已清除集合
+\State 扫描首个环顶点；由所得示向度估计源群方位，选定扫描终点方向
+\ForAll{$P\in\mathcal{P}$（按选定方向沿环顺序）}
+    \ForAll{$c\in C$ 且 $c$ 未被清除、未被跳频规则跳过}
+        \State $r\leftarrow$ /measure$(P,c)$
+        \If{$r=\texttt{near}$} \State /clear$(P,c)$（必成功）；标记 $c$ 已清除 \ElsIf{$r=\texttt{direction}$} \State 将 $(P,\hat{\theta})$ 记入频道 $c$ 的观测表 \EndIf
+    \EndFor
+    \State 顺路清除：直径 $D\le90$ 米且绕路 $\le250$ 米的频道按分级策略就地处理
+\EndFor
+\State 构造各频道代理点，用 Held-Karp 精确 TSP 求处理顺序
+\While{存在已发现且未清除的频道}
+    \State 从机器人当前位置重新规划剩余频道的巡回
+    \State 取下一频道，按分级策略定位并清除
+\EndWhile
+\State 处理队列为空 $\Rightarrow$ 调用 /exit 结束任务
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{处理顺序的路径规划}
+
+多个待处理频道之间存在显著的路径合并空间。我们以每个频道的代理点（直径 $D\le90$ 米时取交会区域质心，追迹时取入射线上的中深点）构造路径规划问题：从最后一个扫描点出发访问所有代理点，使总移动距离最小。该问题即小规模开放旅行商问题（TSP）。因目标数不超过 $16$，我们采用\textbf{Held-Karp 精确算法}：以位掩码动态规划枚举已访问子集，$O(n^{2}2^{n})$ 时间、$O(n2^{n})$ 空间，$n\le16$ 时规模约 $1.6\times10^{7}$ 量级，秒级即可求得\textbf{最优}巡回而非近似解。实际处理时每清除一个目标后，从机器人当前位置对剩余目标重新规划，动态吸收清除过程中的位置偏移。
+
+\subsection{任务完成判定与退出}
+
+由发现完备性（引理~\ref{lem:discovery}），阶段一结束后不存在“未被发现的频道”；阶段二对每个已发现频道执行保证清除的流程，处理队列为空即全部清除完毕，此时调用 /exit 结束。整个判定不依赖干扰源真实总数（正式测试中该值不可见），满足题面“确保所有干扰源被清除”的首要目标。
+
+\subsection{工程实现与鲁棒性}
+
+程序通过 HTTP+JSON 与模拟器通信（/enter、/measure、/clear、/exit 四条指令）。为保证正式测试的鲁棒性，实现中遵循：每个新动作使用新的 request\_id；请求超时（$5$ 秒）或网络失败时，复用原 request\_id 与请求内容重试同一动作（至多重试 $2$ 次、间隔 $0.3$ 秒，保证幂等）；仅采纳使虚拟时刻单调递增的响应维护虚拟时间；串行发送请求；机器人当前位置由本程序已发出指令的 position 字段推算，清除指令位置距原点超过 $1900$ 米时直接放弃；以内置 $17$ 分钟现实时间保护控制预算，扫描与处理循环每步检查已运行时长，超时立即停止并 /exit（题面现实时间上限为 $20$ 分钟，留出约 $3$ 分钟余量）；全程输出请求与响应摘要，便于事后复盘。这些措施避免了重复执行、状态错乱与超时中断等工程风险。
+
+\subsection{演练测试与正式测试结果}
+
+\figtodo{某局演练的机器狗轨迹图：扫描路径、各目标的交会定位与追迹过程（由程序日志绘制）}
+
+\begin{table}[H]
+\centering
+\caption{问题三演练测试统计（待实测填写，建议多局取均值/最值）}
+\label{tab:q3-stats}
+\begin{tabular}{ccccccc}
+\toprule
+局次 & 干扰源总数 & 清除个数 & 清除比例 & 总时间 (s) & 平均定位清除时间 (s) & 程序运行时间 (s) \\
+\midrule
+\TBD & \TBD & \TBD & \TBD & \TBD & \TBD & \TBD \\
+\TBD & \TBD & \TBD & \TBD & \TBD & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{问题三正式测试结果（按题面表1格式，测试后填写）}
+\label{tab:q3-formal}
+\begin{tabular}{cccc}
+\toprule
+测试案例编码 & 清除干扰源个数 & 平均定位清除时间 & 程序运行时间 \\
+\midrule
+\TBD & \TBD & \TBD & \TBD \\
+\TBD & \TBD & \TBD & \TBD \\
+\TBD & \TBD & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\todo{正式测试后：分析三局结果的一致性与波动原因；将模拟器导出的加密日志文件（不改文件名）放入支撑材料；给出支撑材料中日志与本文表格的对应关系。}
+
+% ==============================================================================
+% 八、问题四：定向干扰源
+% ==============================================================================
+\section{问题四的建模与求解}
+
+\todo{本节策略整体处于“候选方案”阶段，尚未定稿。当前 Q4.py 采用“800 米网格＋8 个外围点”的扫描布局，其完备性保证待数值验证；下文给出了一个可证明完备的候选构造。最终采用何种方案待定。}
+
+\subsection{定向干扰源对观测解释的影响}
+
+定向干扰源的有效覆盖角度为定向方向两侧各 $90^{\circ}$（含边界），方向未知。此时 /measure 返回 no\_signal 有三种可能：频道无干扰源、距离超过有效接收半径、或\textbf{检测点位于覆盖角度之外}。负观测的排除能力显著弱化，问题三中“no\_signal 继续前进必安全”等推理不再成立；但另一方面，\textbf{清除规则完全不变}：光学定位与激光清除只与距离（$20$ 米）有关，定向源朝向不会阻止近距离清除。
+
+\subsection{发现阶段的完备性设计（候选方案）}
+
+八点环覆盖扫描对定向源不再完备：位于目标圆边界附近、朝向背离扫描点的定向源可能被所有扫描点“背对”。其根本原因是引理~\ref{lem:coverage} 只保证了“距离可达”，而定向源还要求“方向可达”。对此，一个自然的充分条件是\textbf{包围性}：对任意干扰源位置 $G$，其周围 $1000$ 米内要有扫描点“环绕”它，使任何朝向都能被某个扫描点覆盖。
+
+\begin{lemma}[网格扫描的完备发现（候选方案）]
+\label{lem:grid}
+设正方形网格覆盖正方形 $[-1800,1800]^{2}$，间距 $s\le R_{\min}/\sqrt{2}\approx707$ 米。对任意干扰源 $G\in\disk{O}{R_0}$ 与任意定向方向 $d$，存在网格点 $C$ 满足 $\norm{C-G}\le s\sqrt{2}\le R_{\min}$ 且 $(C-G)\cdot d\ge0$，即该源在 $C$ 处必被检测到。
+\end{lemma}
+
+\begin{proof}
+$G$ 位于某网格单元（闭矩形）内，故 $G$ 在该单元四角点组成的凸包中；单元对角线长 $s\sqrt{2}\le R_{\min}\le R_i$，四角点均在 $G$ 的有效接收半径内。若对四角点均有 $(C-G)\cdot d<0$，则四角点全在过 $G$、法向 $d$ 的开半平面中，其凸包亦然，与 $G$ 在其中矛盾。故必存在角点 $(C-G)\cdot d\ge0$，即 $C$ 位于定向源覆盖角度内（含边界），检测必返回 direction 或 near。
+\end{proof}
+
+取 $s=600$ 米时（$600\le R_{\min}/\sqrt{2}$，且网格对齐正方形边界恰好 $7\times7=49$ 个点），每个单元对角线 $600\sqrt{2}\approx848.5$ 米 $<R_{\min}$，覆盖完备。扫描代价约为：$49\times20=980$ 次检测（$4900$ 秒）加频道切换与路径移动（按蛇形或 TSP 顺序），设计预算远小于虚拟时间上限。\todo{该方案与 Q4.py 现有布局（800 米网格＋8 外围点）的取舍待定：前者有完备性证明、点数较多；后者点数少（23 点）但 800 米网格的包围性不满足引理条件，需数值验证或加密。可考虑折中（如 700 米网格去掉无效点＋边界补充点）。}
+
+\begin{remark}
+机器狗可以离开目标区域，网格点允许位于目标圆外（如 $x=\pm2100$ 等），这不会违反任何规则。
+\end{remark}
+
+\subsection{定向源的定位与清除（候选策略）}
+
+一旦某频道获得示向度观测，交会定位与分级处理流程可与问题三共用，但需注意：
+
+（1）\textbf{追迹的信号保持}：获得示向度说明检测点位于覆盖锥内；沿示向线向源移动时，只要真实方向偏差不超过覆盖锥边缘余量，后续检测点仍在锥内。若追迹途中返回 no\_signal，可能是距离原因（源仍远，可继续前进）或\textbf{已滑出锥边缘}，此时应退回上一个有信号点，换用多方位补测（如从两侧重新交会）再处理。\todo{该分支策略细节待定。}
+
+（2）\textbf{频道判空准则}：由引理~\ref{lem:grid}，扫描结束后从未观测到信号的频道必为空，可直接排除，任务完成判定仍为“处理队列为空”。
+
+\subsection{演练测试与正式测试结果}
+
+\begin{table}[H]
+\centering
+\caption{问题四演练测试统计（待实测填写）}
+\label{tab:q4-stats}
+\begin{tabular}{ccccccc}
+\toprule
+局次 & 干扰源总数 & 清除个数 & 清除比例 & 总时间 (s) & 平均定位清除时间 (s) & 程序运行时间 (s) \\
+\midrule
+\TBD & \TBD & \TBD & \TBD & \TBD & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{问题四正式测试结果（按题面表1格式，测试后填写）}
+\label{tab:q4-formal}
+\begin{tabular}{cccc}
+\toprule
+测试案例编码 & 清除干扰源个数 & 平均定位清除时间 & 程序运行时间 \\
+\midrule
+\TBD & \TBD & \TBD & \TBD \\
+\TBD & \TBD & \TBD & \TBD \\
+\TBD & \TBD & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==============================================================================
+% 九、模型评价与推广
+% ==============================================================================
+\section{模型的评价与推广}
+
+\subsection{模型优点}
+
+（1）几何表示精确：将示向误差建模为扇区约束而非概率噪声，定位区域是全部可用信息的严格集合表示，不引入任何假设性分布；
+
+（2）发现完备性有数学保证：问题三的八点环扫描与问题四的网格扫描分别给出“所有干扰源必被发现”的引理，使“确保全部清除”不依赖未知目标总数；
+
+（3）分级处理兼顾保证与效率：小区域质心清除配合补测迭代、大区域追迹夹逼（几何保证收尾），每步观测均被复用；
+
+（4）时间压缩充分：跳频规则省去无效检测、顺路清除合并移动路径、Held-Karp 精确 TSP 保证处理巡回最优；
+
+（5）模块化：问题一、二的区域模型与直径计算直接服务于问题三、四的在线定位，代码可复用、行为可验证。
+
+\subsection{模型不足}
+
+（1）问题二采用两层离散化近似求解连续 min--max，离散步长的理论误差未严格界出；\todo{可补充步长收敛性实验。}
+
+（2）分级处理的若干阈值（跳频 $60$ 米、直接清除 $90$ 米、迭代清除 $30$ 米、追迹步长 $200$ 米、夹逼阈值 $36$ 米、顺路绕路 $250$ 米）为工程参数，需通过演练统计调优；
+
+（3）问题四的完备扫描点数较多、发现阶段耗时显著高于问题三，扫描布局仍有优化空间（如按方向覆盖需求设计非均匀布局）；
+
+（4）示向误差被当作“扇区内任意取值”的最坏情况处理，未利用其统计规律；若引入更细的误差分布假设，可进一步压缩不确定区域。
+
+\subsection{模型推广}
+
+（1）多机器狗协同：将发现扫描点分配给多台机器狗并行检测，总虚拟时间近似线性缩短，路径规划扩展为多旅行商问题；
+
+（2）动态环境：若干扰源可移动，扇区约束需附加时间戳并引入运动模型，本文的“观测—交会—逼近”闭环仍可复用；
+
+（3）三维场景：去除平面假设后，示向度变为方位—俯仰角对，定位区域成为三维多面体，直径与覆盖判定算法可类比推广。
+
+% ==============================================================================
+% 参考文献
+% ==============================================================================
+\begin{thebibliography}{9}
+\bibitem{mcm2026} 全国大学生数学建模竞赛组委会. 2026年高教社杯全国大学生数学建模竞赛题目（B题）及附件, 2026.
+\bibitem{toussaint1983} Toussaint G T. Solving geometric problems with the rotating calipers. In: Proceedings of IEEE MELECON'83, Athens, 1983.
+\bibitem{deberg2008} de Berg M, Cheong O, van Kreveld M, Overmars M. Computational Geometry: Algorithms and Applications. 3rd ed. Springer, 2008.
+\bibitem{shamos1978} Shamos M I. Computational Geometry. Ph.D. thesis, Yale University, 1978.
+\bibitem{jung1901} Jung H W E. Über die kleinste Kugel, die eine räumliche Figur einschließt. Journal für die reine und angewandte Mathematik, 1901, 123: 241-257.
+\end{thebibliography}
+\todo{定稿前核对上述文献的著录信息，并按实际引用情况增删；正文引用处已标注 \cite{mcm2026,toussaint1983,deberg2008,shamos1978,jung1901} 的占位。}
+
+% ==============================================================================
+% 附录
+% ==============================================================================
+\appendix
+
+\section{支撑材料文件列表}
+
+\begin{table}[H]
+\centering
+\caption{支撑材料文件列表（随最终提交版本更新）}
+\label{tab:appendix-files}
+\begin{tabular}{cl}
+\toprule
+文件名 & 说明 \\
+\midrule
+\texttt{src/Q1.py} & 问题一提交文件：交会定位区域、旋转卡壳直径、直径圆覆盖判定（自包含，仅依赖 numpy） \\
+\texttt{src/Q2.py} & 问题二提交文件：第二检测点最坏直径优化与候选区域生成（连同 Q1.py 一并提交） \\
+\texttt{src/Q3\_fast2.py} & 问题三正式运行版本：八点环覆盖扫描＋交会分级清除＋Held-Karp 精确 TSP \\
+\texttt{src/geo\_common.py} & 问题三几何内核（自 Q1.py 抽取的交会定位与直径计算） \\
+\texttt{src/api\_utils.py} & 模拟器 HTTP 接口封装 \\
+\texttt{src/Q3\_fast.py、Q3.py、Q3\_7000s.py、Q3\_dzz.py、q3\_heuristic.py} & 问题三早期备选版本（存档；提交与否待定） \\
+\texttt{src/Q4.py} & 问题四：定向源策略主程序（方案待定） \\
+\texttt{src/test\_*.py} & 各模块单元测试与模拟测试脚本 \\
+\texttt{*.jlog} & 模拟器导出的正式测试加密日志（\textbf{文件名不得修改}） \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{程序源代码}
+
+\todo{按竞赛规范，附录必须包含建模所用到的全部完整、可运行的源程序代码。定稿时将最终采用的源程序全文粘贴于此（或按规范说明置于支撑材料），并确保与支撑材料中的代码完全一致。}
+
+\section{人工智能工具使用说明}
+
+\todo{按《全国大学生数学建模竞赛人工智能工具使用规定（2026年试行）》的要求填写（如适用）。可从 https://www.mcm.edu.cn/ 下载该规定。}
+
+\section{演练与正式测试记录}
+
+\todo{如需，可在此附各局测试案例编码、关键指标明细与典型轨迹图；正式测试的日志文件按题目要求放入支撑材料。}
+
+\end{document}
