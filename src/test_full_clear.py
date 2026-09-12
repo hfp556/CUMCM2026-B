@@ -1,28 +1,8 @@
-import math
 import time
 import numpy as np
 from Q1 import localize_region, convex_diameter
+from Q2 import get_problem2_point_dynamic
 from api_utils import post, base, measure
-
-def get_problem2_point_dynamic(S1, theta1, channel, attempt=0):
-    """【优化3：GDOP 最优选点】"""
-    est_distance = 1200.0
-    G_est = S1 + est_distance * np.array([
-        math.cos(math.radians(theta1)),
-        math.sin(math.radians(theta1))
-    ])
-    scale = [1.0, 0.5, 0.25, 0.15, 0.1]
-    if attempt >= len(scale):
-        return None, None
-    d = 800.0 * scale[attempt]
-    perp_angle = math.radians(theta1 + 90)
-    S2 = G_est + d * np.array([math.cos(perp_angle), math.sin(perp_angle)])
-    if np.linalg.norm(S2) > 1700:
-        perp_angle = math.radians(theta1 - 90)
-        S2 = G_est + d * np.array([math.cos(perp_angle), math.sin(perp_angle)])
-    if np.linalg.norm(S2) > 1800:
-        return None, None
-    return S2, (90.0, d)
 
 def clear_channel(channel, S_list, theta_list):
     """问题一稳健逼近逻辑（保留原样）"""
@@ -114,7 +94,8 @@ def scan_and_clear(current_pos, start_time, cleared_channels):
         p2_success = False
         
         while p2_attempt < 5:
-            S2, params = get_problem2_point_dynamic(S1, theta1, ch, p2_attempt)
+            # Q3 使用快速启发式接口；严格问题二模型见 Q2.optimize_second_point。
+            S2, params = get_problem2_point_dynamic(S1, theta1, attempt=p2_attempt)
             if S2 is None:
                 break
             delta, dist = params
