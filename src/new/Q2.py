@@ -1,12 +1,3 @@
-"""【问题二 提交文件】问题二：基于第一次完整可能区域的第二检测点优化。
-
-提交说明：本文件依赖 Q1.py（问题一）中的三个几何函数
-``localize_region`` / ``convex_diameter`` / ``point_in_convex_polygon``，
-提交问题二代码时需连同 Q1.py 一并提交。
-
-原放在本文件内的 Q3 快速启发式 ``get_problem2_point_dynamic``（问题三
-专用，不代表问题二严格模型）已移至 q3_heuristic.py。
-"""
 
 from dataclasses import dataclass
 import math
@@ -110,13 +101,7 @@ def classify_detection_point(
     max_reception_radius=MAX_RECEPTION_RADIUS,
     tolerance=1e-7,
 ):
-    """判断 S2 属于可能检测区域还是稳健候选区域。
-
-    可能检测区域为 ``Ω1 ⊕ B(0,1500)``，即存在某个可能源位置能被
-    1500 m 接收半径覆盖。稳健候选区域为
-    ``∩_{G∈Ω1} B(G,1000)``，其中任意可能源在最小接收半径下均可检测。
-    对凸多边形，距离 S2 最远的区域点一定可以在顶点中取得。
-    """
+  
     point = _as_point(S2, "S2")
     polygon = np.asarray(first_region, dtype=float)
     if len(polygon) < 3:
@@ -138,11 +123,7 @@ def generate_candidate_points(
     min_reception_radius=MIN_RECEPTION_RADIUS,
     max_reception_radius=MAX_RECEPTION_RADIUS,
 ):
-    """在连续可能检测区域的包围盒中离散采样候选点。
 
-    返回 ``(possible_points, robust_points)``。点云只是连续候选区域的
-    数值离散，不意味着机器狗被限制在目标圆内。
-    """
     polygon = np.asarray(first_region, dtype=float)
     if len(polygon) < 3:
         raise ValueError("first_region must be a non-empty polygon")
@@ -287,12 +268,7 @@ def optimize_second_point(
     source_sample_count=13,
     circle_segments=180,
 ):
-    """离散求解 ``argmin_S2 max_Gi D(S2,Gi)``。
-
-    主目标严格采用两次测向后定位区域直径的最坏值。只在最坏直径相同
-    时，才依次偏好更短移动距离和更大的典型交会角。默认仅评价稳健
-    候选点，从而在未知接收半径属于 [1000,1500] 时保证第二次可检测。
-    """
+   
     S1 = _as_point(S1, "S1")
     target_center = _as_point(target_center, "target_center")
     omega1 = first_possible_region(
