@@ -1,0 +1,47 @@
+{
+  "date": "2026-09-13",
+  "entry": "Q4_active.py",
+  "direction_model": "fixed inclusive 180-degree transmit half-plane",
+  "round_1": {
+    "change": "replace inner-then-outer supplemental tour with deterministic fixed-endpoint ring weave",
+    "certified_probe_count": 25,
+    "supplemental_probe_count": 24,
+    "old_supplemental_route_m": 19329.613131461974,
+    "new_supplemental_route_m": 18401.941886539753,
+    "route_saving_m": 927.6712449222206,
+    "omnidirectional_seed": 20260913,
+    "source_count": 10,
+    "before_virtual_time_s": 8998.6,
+    "after_virtual_time_s": 8729.5,
+    "observed_change_s": -269.1,
+    "all_sources_cleared_before": true,
+    "all_sources_cleared_after": true
+  },
+  "round_2": {
+    "change": "serpentine supplemental channel order plus inherited bounded en-route clears on directional mesh legs",
+    "seeds": [20260913, 20260914, 20260915],
+    "source_count_per_seed": 10,
+    "directional_fraction": 1.0,
+    "before_virtual_time_s": [
+      9640.671926303534,
+      9917.016607896345,
+      10041.972371297777
+    ],
+    "after_virtual_time_s": [
+      9267.589930063723,
+      9894.016607896345,
+      9583.533937861283
+    ],
+    "before_average_virtual_time_s": 9866.553635165887,
+    "after_average_virtual_time_s": 9581.71349194045,
+    "average_change_s": -284.8401432254359,
+    "average_change_percent": -2.8869264158279404,
+    "cleared_per_seed_before": [10, 10, 10],
+    "cleared_per_seed_after": [10, 10, 10]
+  },
+  "claims": {
+    "continuous_optimum_claimed": false,
+    "official_simulator_validated": false,
+    "local_directional_harness_only": true
+  }
+}

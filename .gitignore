@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local simulator run logs and redundant quick experiment output
+logs/*.jsonl
+src/experiments/q3/q3_phase2_results_quick.json

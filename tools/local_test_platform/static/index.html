@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CUMCM 2026 B 题 Q3 本地模拟、实验与调试平台">
+  <title>Q3 本地实验台</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><span></span></div>
+      <div>
+        <h1>Q3 本地实验台</h1>
+        <p>官方接口兼容模式 · <span id="apiAddress">127.0.0.1:2026</span></p>
+      </div>
+    </div>
+    <div class="top-status">
+      <span id="connectionDot" class="status-dot"></span>
+      <span id="connectionLabel">正在连接</span>
+      <span class="divider"></span>
+      <span id="runStatus" class="run-badge">空闲</span>
+    </div>
+  </header>
+
+  <main class="shell">
+    <aside class="control-panel panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">实验设置</span>
+          <h2>准备一局</h2>
+        </div>
+        <button id="randomSeed" class="icon-button" type="button" title="换一个随机种子" aria-label="换一个随机种子">↻</button>
+      </div>
+
+      <form id="scenarioForm">
+        <label>
+          <span>随机种子</span>
+          <input id="seed" name="seed" type="number" value="20260913" step="1">
+        </label>
+
+        <label>
+          <span>信号源数量</span>
+          <select id="sourceCount" name="source_count">
+            <option>10</option><option>11</option><option selected>12</option>
+            <option>13</option><option>14</option><option>15</option><option>16</option>
+          </select>
+        </label>
+
+        <label>
+          <span>测向误差</span>
+          <select id="errorMode" name="error_mode">
+            <option value="hash">确定性随机 [-1°, +1°]</option>
+            <option value="minus_one">固定 -1°</option>
+            <option value="zero">无误差 0°</option>
+            <option value="plus_one">固定 +1°</option>
+          </select>
+        </label>
+
+        <label>
+          <span>每 N 次动作断网一次</span>
+          <input id="failEvery" name="fail_transport_every" type="number" min="2" step="1" placeholder="关闭">
+        </label>
+
+        <label class="switch-row">
+          <input id="forceClearFail" type="checkbox">
+          <span class="switch" aria-hidden="true"></span>
+          <span>每频道首次清除强制失败</span>
+        </label>
+
+        <div class="field-separator"></div>
+
+        <fieldset class="run-mode-picker">
+          <legend>运行模式</legend>
+          <label>
+            <input type="radio" name="run_mode" value="single" checked>
+            <span><strong>只运行一局</strong><small>运行当前种子</small></span>
+          </label>
+          <label>
+            <input type="radio" name="run_mode" value="batch">
+            <span><strong>全部运行</strong><small>同一版本运行 12 个种子</small></span>
+          </label>
+        </fieldset>
+
+        <label>
+          <span>运行程序</span>
+          <select id="version" name="version">
+            <option value="active">Q3_active_v2 · 主动测量</option>
+            <option value="phase1">Q3_phase1 · 鲁棒交集</option>
+            <option value="fast2">Q3_fast2 · 原始基线</option>
+          </select>
+        </label>
+
+        <label class="switch-row current-scene-row">
+          <input id="reuseScenario" type="checkbox">
+          <span class="switch" aria-hidden="true"></span>
+          <span>沿用当前信号源位置</span>
+        </label>
+
+        <button id="runButton" class="primary-button" type="submit">
+          <span class="button-icon">▶</span><span>创建场景并运行</span>
+        </button>
+        <div class="button-row">
+          <button id="prepareButton" class="secondary-button" type="button">只创建场景</button>
+          <button id="stopButton" class="danger-button" type="button" disabled>停止</button>
+        </div>
+      </form>
+
+      <div class="utility-row">
+        <button id="importButton" type="button">导入复现</button>
+        <button id="exportButton" type="button">导出本局</button>
+        <input id="importFile" type="file" accept="application/json,.json" hidden>
+      </div>
+
+      <details class="manual-tools">
+        <summary>手动接口调试</summary>
+        <div class="manual-grid">
+          <label class="wide"><span>机器狗编号</span><input id="robotId" value="202619058021"></label>
+          <label><span>X / 米</span><input id="manualX" type="number" value="0"></label>
+          <label><span>Y / 米</span><input id="manualY" type="number" value="0"></label>
+          <label class="wide"><span>频道</span><input id="manualChannel" type="number" min="1" max="20" value="1"></label>
+        </div>
+        <div class="manual-actions">
+          <button type="button" data-path="/enter">进入</button>
+          <button type="button" data-path="/measure">测量</button>
+          <button type="button" data-path="/clear">清除</button>
+          <button type="button" data-path="/exit">退出</button>
+        </div>
+      </details>
+    </aside>
+
+    <section class="workspace">
+      <div class="metric-grid" aria-label="本局关键指标">
+        <article class="metric-card">
+          <span>虚拟时间</span><strong id="metricTime">0.0 s</strong><small id="metricMinutes">0.0 min</small>
+        </article>
+        <article class="metric-card">
+          <span>发现 / 清除</span><strong id="metricCleared">0 / 0</strong><small id="metricMissed">等待进入</small>
+        </article>
+        <article class="metric-card">
+          <span>移动距离</span><strong id="metricMove">0 m</strong><small id="metricActions">0 次动作</small>
+        </article>
+        <article class="metric-card">
+          <span>机器狗位置</span><strong id="metricPosition">0, 0</strong><small id="metricChannel">测向频道 1</small>
+        </article>
+      </div>
+
+      <section id="batchPanel" class="batch-panel panel" hidden>
+        <div class="batch-summary">
+          <div>
+            <span class="eyebrow">12 种子批量结果</span>
+            <h2 id="batchTitle">等待开始</h2>
+          </div>
+          <div class="batch-kpis">
+            <div><span>平均虚拟用时</span><strong id="batchAverage">—</strong></div>
+            <div><span>完整清除</span><strong id="batchSuccess">0 / 12</strong></div>
+            <div><span>平均动作数</span><strong id="batchActions">—</strong></div>
+          </div>
+        </div>
+        <div class="progress-track" aria-label="批量运行进度"><span id="batchProgress"></span></div>
+        <div id="batchRuns" class="batch-runs"></div>
+      </section>
+
+      <section class="arena-panel panel">
+        <div class="panel-heading arena-heading">
+          <div>
+            <span class="eyebrow">实时轨迹</span>
+            <h2>目标区域</h2>
+          </div>
+          <label class="truth-toggle">
+            <input id="showTruth" type="checkbox" checked>
+            <span>显示信号源真值</span>
+          </label>
+        </div>
+        <div class="arena-wrap">
+          <canvas id="arena" aria-label="机器狗轨迹与信号源位置图"></canvas>
+          <div class="arena-legend" aria-hidden="true">
+            <span><i class="legend-source"></i>信号源</span>
+            <span><i class="legend-direction"></i>测得方向</span>
+            <span><i class="legend-clear"></i>清除成功</span>
+          </div>
+          <div id="lastAction" class="last-action">尚无动作</div>
+        </div>
+      </section>
+
+      <div class="detail-grid">
+        <section class="trace-panel panel">
+          <div class="panel-heading compact">
+            <div><span class="eyebrow">请求与响应</span><h2>接口轨迹</h2></div>
+            <span id="transactionCount" class="counter">0 条</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>接口</th><th>频道</th><th>结果</th><th>虚拟时刻</th></tr></thead>
+              <tbody id="transactionBody"><tr><td colspan="5" class="empty">等待程序连接</td></tr></tbody>
+            </table>
+          </div>
+          <pre id="packetDetail" class="packet-detail">点击一行查看完整请求与响应</pre>
+        </section>
+
+        <section class="output-panel panel">
+          <div class="panel-heading compact">
+            <div><span class="eyebrow">标准输出</span><h2>程序日志</h2></div>
+            <button id="copyOutput" class="text-button" type="button">复制</button>
+          </div>
+          <div id="programOutput" class="program-output" role="log" aria-live="polite">
+            <div class="output-placeholder">运行程序后，这里会实时显示输出。</div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,21 +1,12 @@
-"""
-【问题三辅助：问题一几何内核副本】geo_common.py — 从 Q1.py 抽取的几何子程序
-========================================================================
-包含 Q3_fast / Q3_fast2 所需的全部几何计算，从 Q1.py 原样提取：
-  - localize_region：多次示向度观测的交会定位区域（±1° 扇区 + 1500 m
-    接收圆盘 + 1800 m 目标圆盘）
-  - convex_diameter：凸多边形直径（旋转卡壳）
-  - point_in_convex_polygon、point_to_segment_distance、
-    minimum_distance_to_polygon：严格点到凸多边形距离
-  - minimum_enclosing_circle：定位区域的最小包围圆
-及其内部依赖工具（半平面/凸多边形裁剪等）。
+"""【问题一 提交文件】问题一：带示向误差与接收范围约束的交会定位。
 
-提交说明：本文件仅供问题三使用。问题一提交 Q1.py（自包含），问题二
-提交 Q2.py + Q1.py；问题一、问题二的提交不涉及本文件。
+提交说明：本文件自包含（仅依赖 numpy），提交问题一代码时单独提交本
+文件即可。问题二（Q2.py）与问题三（Q3_fast/Q3_fast2）会调用本文件的
+几何函数：问题二直接 import 本文件；问题三使用独立副本 geo_common.py。
 """
 
+from dataclasses import dataclass
 import math
-import random
 from typing import Iterable, Sequence
 
 import numpy as np
@@ -186,6 +177,30 @@ def localize_region(
     return region
 
 
+def point_in_convex_polygon(point, poly, tolerance=GEOMETRY_TOLERANCE):
+    """判断点是否位于凸多边形内部或边界上。"""
+    polygon = _normalise_polygon(poly)
+    point = np.asarray(point, dtype=float)
+    if len(polygon) == 0:
+        return False
+    if len(polygon) == 1:
+        return np.linalg.norm(point - polygon[0]) <= tolerance
+    if len(polygon) == 2:
+        edge = polygon[1] - polygon[0]
+        return (
+            abs(_cross_2d(edge, point - polygon[0])) <= tolerance
+            and np.dot(point - polygon[0], point - polygon[1]) <= tolerance
+        )
+
+    signs = np.array(
+        [
+            _cross_2d(polygon[(i + 1) % len(polygon)] - polygon[i], point - polygon[i])
+            for i in range(len(polygon))
+        ]
+    )
+    return bool(np.all(signs >= -tolerance) or np.all(signs <= tolerance))
+
+
 def convex_diameter(poly):
     """用旋转卡壳计算凸多边形直径及一对直径端点。"""
     polygon = _normalise_polygon(poly)
@@ -229,164 +244,40 @@ def convex_diameter(poly):
     return math.sqrt(max(best_squared, 0.0)), best_pair
 
 
-def point_to_segment_distance(point, start, end):
-    """Return the Euclidean distance from a point to a closed line segment."""
-    point = np.asarray(point, dtype=float)
-    start = np.asarray(start, dtype=float)
-    end = np.asarray(end, dtype=float)
-    if point.shape != (2,) or start.shape != (2,) or end.shape != (2,):
-        raise ValueError("point, start and end must be two-dimensional")
-
-    edge = end - start
-    squared_length = float(np.dot(edge, edge))
-    if squared_length <= GEOMETRY_TOLERANCE**2:
-        return float(np.linalg.norm(point - start))
-    fraction = float(np.dot(point - start, edge) / squared_length)
-    fraction = min(1.0, max(0.0, fraction))
-    projection = start + fraction * edge
-    return float(np.linalg.norm(point - projection))
+@dataclass(frozen=True)
+class DiameterCircleCoverage:
+    diameter: float
+    diameter_pair: tuple
+    center: np.ndarray
+    radius: float
+    max_center_distance: float
+    farthest_point: np.ndarray
+    covers: bool
 
 
-def point_in_convex_polygon(point, poly, tolerance=GEOMETRY_TOLERANCE):
-    """Return whether ``point`` lies in or on a convex polygon."""
-    point = np.asarray(point, dtype=float)
-    polygon = _normalise_polygon(poly)
-    if point.shape != (2,):
-        raise ValueError("point must be two-dimensional")
-    if len(polygon) == 0:
-        return False
-    if len(polygon) == 1:
-        return float(np.linalg.norm(point - polygon[0])) <= tolerance
-    if len(polygon) == 2:
-        return point_to_segment_distance(point, polygon[0], polygon[1]) <= tolerance
+def diameter_circle_coverage(poly, tolerance=1e-7):
+    """判断以一对区域直径端点为直径的圆能否覆盖整个凸区域。
 
-    orientation = 1.0 if _signed_area(polygon) >= 0.0 else -1.0
-    for index, start in enumerate(polygon):
-        end = polygon[(index + 1) % len(polygon)]
-        if orientation * _cross_2d(end - start, point - start) < -tolerance:
-            return False
-    return True
-
-
-def minimum_distance_to_polygon(point, poly):
-    """Return the true minimum distance from a point to a convex polygon."""
-    point = np.asarray(point, dtype=float)
-    polygon = _normalise_polygon(poly)
-    if point.shape != (2,):
-        raise ValueError("point must be two-dimensional")
-    if len(polygon) == 0:
-        raise ValueError("poly must not be empty")
-    if point_in_convex_polygon(point, polygon):
-        return 0.0
-    if len(polygon) == 1:
-        return float(np.linalg.norm(point - polygon[0]))
-    return min(
-        point_to_segment_distance(point, polygon[index], polygon[(index + 1) % len(polygon)])
-        for index in range(len(polygon))
-    )
-
-
-def _circle_contains(center, radius, point, tolerance):
-    scale = max(1.0, float(radius))
-    return float(np.linalg.norm(np.asarray(point, dtype=float) - center)) <= radius + tolerance * scale
-
-
-def _diameter_circle(first, second):
-    center = (first + second) / 2.0
-    return center, float(np.linalg.norm(first - center))
-
-
-def _circumcircle(first, second, third):
-    ax, ay = first
-    bx, by = second
-    cx, cy = third
-    denominator = 2.0 * (
-        ax * (by - cy) + bx * (cy - ay) + cx * (ay - by)
-    )
-    if abs(denominator) <= GEOMETRY_TOLERANCE:
-        return None
-    a2 = ax * ax + ay * ay
-    b2 = bx * bx + by * by
-    c2 = cx * cx + cy * cy
-    center = np.array(
-        [
-            (a2 * (by - cy) + b2 * (cy - ay) + c2 * (ay - by)) / denominator,
-            (a2 * (cx - bx) + b2 * (ax - cx) + c2 * (bx - ax)) / denominator,
-        ],
-        dtype=float,
-    )
-    return center, float(np.linalg.norm(center - first))
-
-
-def _minimum_circle_with_two_boundary_points(points, first, second, tolerance):
-    diameter = _diameter_circle(first, second)
-    if all(_circle_contains(*diameter, point, tolerance) for point in points):
-        return diameter
-
-    left_circle = None
-    right_circle = None
-    left_cross = -float("inf")
-    right_cross = float("inf")
-    baseline = second - first
-    for point in points:
-        cross = _cross_2d(baseline, point - first)
-        circle = _circumcircle(first, second, point)
-        if circle is None:
-            continue
-        center_cross = _cross_2d(baseline, circle[0] - first)
-        if cross > 0.0 and center_cross > left_cross:
-            left_circle = circle
-            left_cross = center_cross
-        elif cross < 0.0 and center_cross < right_cross:
-            right_circle = circle
-            right_cross = center_cross
-
-    if left_circle is None:
-        return right_circle
-    if right_circle is None:
-        return left_circle
-    return left_circle if left_circle[1] <= right_circle[1] else right_circle
-
-
-def _minimum_circle_with_one_boundary_point(points, boundary, tolerance):
-    circle = (boundary.copy(), 0.0)
-    for index, point in enumerate(points):
-        if _circle_contains(*circle, point, tolerance):
-            continue
-        if circle[1] <= tolerance:
-            circle = _diameter_circle(boundary, point)
-        else:
-            circle = _minimum_circle_with_two_boundary_points(
-                points[: index + 1], boundary, point, tolerance
-            )
-    return circle
-
-
-def minimum_enclosing_circle(poly, tolerance=GEOMETRY_TOLERANCE):
-    """Return the center and radius of the minimum circle enclosing a polygon.
-
-    A circle encloses every point of a polygon exactly when it encloses every
-    vertex, so the standard randomized incremental point-set algorithm applies.
-    A fixed local shuffle seed makes results reproducible without mutating the
-    process-wide random state.
+    凸区域到固定圆心的最远点必为顶点，因此检查所有多边形顶点即可。
+    该性质并非对任意凸区域恒成立；锐角三角形就是反例。
     """
     polygon = _normalise_polygon(poly)
     if len(polygon) == 0:
         raise ValueError("poly must not be empty")
-    if tolerance < 0:
-        raise ValueError("tolerance must be non-negative")
 
-    points = [point.copy() for point in polygon]
-    random.Random(0).shuffle(points)
-    circle = None
-    for index, point in enumerate(points):
-        if circle is None or not _circle_contains(*circle, point, tolerance):
-            circle = _minimum_circle_with_one_boundary_point(
-                points[: index + 1], point, tolerance
-            )
-    center, radius = circle
-    # The containment tolerance is intentionally useful during the incremental
-    # comparisons, but the returned circle must not under-report its actual
-    # vertex envelope.  Recompute the radius conservatively from every vertex.
-    radius = max(radius, max(float(np.linalg.norm(point - center)) for point in polygon))
-    return center, radius
+    diameter, pair = convex_diameter(polygon)
+    center = (pair[0] + pair[1]) / 2.0
+    radius = diameter / 2.0
+    distances = np.linalg.norm(polygon - center, axis=1)
+    farthest_index = int(np.argmax(distances))
+    max_distance = float(distances[farthest_index])
+    scaled_tolerance = tolerance * max(1.0, diameter)
+    return DiameterCircleCoverage(
+        diameter=diameter,
+        diameter_pair=(pair[0].copy(), pair[1].copy()),
+        center=center,
+        radius=radius,
+        max_center_distance=max_distance,
+        farthest_point=polygon[farthest_index].copy(),
+        covers=max_distance <= radius + scaled_tolerance,
+    )
