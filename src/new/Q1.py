@@ -1,9 +1,4 @@
-"""【问题一 提交文件】问题一：带示向误差与接收范围约束的交会定位。
 
-提交说明：本文件自包含（仅依赖 numpy），提交问题一代码时单独提交本
-文件即可。问题二（Q2.py）与问题三（Q3_fast/Q3_fast2）会调用本文件的
-几何函数：问题二直接 import 本文件；问题三使用独立副本 geo_common.py。
-"""
 
 from dataclasses import dataclass
 import math
@@ -141,12 +136,7 @@ def localize_region(
     target_center=(0.0, 0.0),
     circle_segments=360,
 ):
-    """计算所有观测共同允许的干扰源位置区域。
 
-    每次 ``direction`` 观测加入三个约束：目标圆盘、检测点处最大
-    1500 m 接收圆盘，以及示向度 ``±angle_error_deg`` 的角扇区。
-    这里没有 1000 m 内边界；1000 m 是接收半径下界，不是源距下界。
-    """
     if len(S_list) != len(theta_list):
         raise ValueError("S_list and theta_list must have the same length")
     if R_max <= 0 or R_target <= 0:
@@ -178,7 +168,7 @@ def localize_region(
 
 
 def point_in_convex_polygon(point, poly, tolerance=GEOMETRY_TOLERANCE):
-    """判断点是否位于凸多边形内部或边界上。"""
+
     polygon = _normalise_polygon(poly)
     point = np.asarray(point, dtype=float)
     if len(polygon) == 0:
@@ -256,11 +246,7 @@ class DiameterCircleCoverage:
 
 
 def diameter_circle_coverage(poly, tolerance=1e-7):
-    """判断以一对区域直径端点为直径的圆能否覆盖整个凸区域。
 
-    凸区域到固定圆心的最远点必为顶点，因此检查所有多边形顶点即可。
-    该性质并非对任意凸区域恒成立；锐角三角形就是反例。
-    """
     polygon = _normalise_polygon(poly)
     if len(polygon) == 0:
         raise ValueError("poly must not be empty")
